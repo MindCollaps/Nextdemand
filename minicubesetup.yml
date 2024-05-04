@@ -1,0 +1,150 @@
+# ansible-galaxy collection install -r requirements.yml
+# ansible-galaxy collection install ansible.posix
+# ansible-galaxy collection install community.general
+# ansible-galaxy collection install community.docker
+# ansible-galaxy collection install kubernetes.core
+# ansible-playbook -i inv install.yml
+# inv: 
+# [controller]
+# server1 ansible_host=server ansible_ssh_private_key_file=/path.pem ansible_user=root
+
+- name: Set AllowTcpForwarding in sshd_config
+  hosts: all
+  become: yes
+  tasks:
+    - name: Comment out AllowTcpForwarding
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^AllowTcpForwarding no'
+        line: '#AllowTcpForwarding yes'
+
+    - name: Restart sshd
+      service:
+        name: sshd
+        state: restarted
+
+
+- name: Update apt and install necessary packages
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - ufw
+        - docker.io
+        - docker-compose
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+        - gnupg2
+        - apt-transport-https
+        - python3
+        - python3-pip
+
+    - name: Install helm if not exists
+      unarchive:
+        src: https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz
+        dest: /usr/local/bin
+        extra_opts: "--strip-components=1"
+        owner: root
+        group: root
+        mode: 0755
+        remote_src: true
+      args:
+        creates: /usr/local/bin/helm
+
+- name: Install kubectl
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create Kubernetes repository file
+      copy:
+        content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
+        dest: /etc/apt/sources.list.d/kubernetes.list
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Add Kubernetes GPG key to APT keyring
+      become: true
+      apt_key:
+        url: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
+        state: present
+        validate_certs: yes
+        keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Install kubectl
+      apt:
+        name: kubectl
+        state: present
+
+- name: Install minikube
+  hosts: all
+  become: yes
+  tasks:
+    - name: Download minikube deb package
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+        dest: /tmp/minikube_latest_amd64.deb
+
+    - name: Install minikube
+      apt:
+        deb: /tmp/minikube_latest_amd64.deb
+
+- name: Add current user to docker group
+  hosts: all
+  become: true
+  tasks:
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_env.SUDO_USER | default(ansible_env.USER) }}"
+        groups: docker
+        append: yes
+
+- name: Setup UFW
+  hosts: all
+  become: yes
+  tasks:
+    - name: SSH
+      community.general.ufw:
+        rule: limit
+        port: [ssh, 80, 443]
+        proto: tcp
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+
+- name: Setup Kubernetes Cluster
+  hosts: all
+  become: no
+  tasks:
+    - name: Start Kubernetes Cluster
+      command: minikube start
+
+    - name: Install kubernetes Python package with --break-system-packages
+      pip:
+        name: kubernetes
+        state: present
+        extra_args: "--break-system-packages"
+
+    - name: Fetch traefik.yml from target machine
+      copy:
+        src: kubernetes/traefik.yml
+        dest: /tmp/traefik.yml
+
+    - name: Apply traefik.yml
+      kubernetes.core.k8s:
+        src: /tmp/traefik.yml
+        state: present
