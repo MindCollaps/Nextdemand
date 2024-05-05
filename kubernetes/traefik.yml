@@ -78,11 +78,11 @@ spec:
             - --api.insecure=true
           ports:
             - name: web
-              containerPort: 80
+              containerPort: 8000
             - name: websecure
-              containerPort: 443
+              containerPort: 8443
             - name: dashboard
-              containerPort: 8080
+              containerPort: 9000
 ---
 apiVersion: v1
 kind: Service
@@ -102,10 +102,16 @@ kind: Service
 metadata:
   name: traefik-web-service
   namespace: default
+  annotations:
+    metallb.universe.tf/address-pool: production-public-ips
 spec:
   type: LoadBalancer
   ports:
     - targetPort: web
       port: 80
+      name: http
+    - targetPort: websecure
+      port: 443
+      name: https
   selector:
     app: traefik

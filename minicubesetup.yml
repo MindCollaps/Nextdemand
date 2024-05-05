@@ -138,13 +138,29 @@
         name: kubernetes
         state: present
         extra_args: "--break-system-packages"
-
-    - name: Fetch traefik.yml from target machine
-      copy:
-        src: kubernetes/traefik.yml
-        dest: /tmp/traefik.yml
-
-    - name: Apply traefik.yml
-      kubernetes.core.k8s:
-        src: /tmp/traefik.yml
+    
+    - name: Add Nextcloud Helm repository
+      kubernetes.core.helm_repository:
+        name: nextcloud
+        repo_url: https://nextcloud.github.io/helm/
         state: present
+
+- name: Install Taefik
+  hosts: all
+  become: no
+  tasks:
+    - name: Add Traefik Helm repository
+      kubernetes.core.helm_repository:
+        name: traefik
+        repo_url: https://traefik.github.io/charts
+
+    - name: Update Helm chart repository
+      kubernetes.core.helm_repository:
+        name: traefik
+        state: latest
+
+    - name: Install Traefik using Helm
+      kubernetes.core.helm:
+        name: traefik
+        chart_ref: traefik/traefik
+ # add kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
