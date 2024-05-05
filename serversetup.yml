@@ -38,14 +38,7 @@
         state: present
       loop:
         - ufw
-        - docker.io
-        - docker-compose
-        - apt-transport-https
-        - ca-certificates
         - curl
-        - software-properties-common
-        - gnupg2
-        - apt-transport-https
         - python3
         - python3-pip
 
@@ -61,78 +54,28 @@
       args:
         creates: /usr/local/bin/helm
 
-- name: Install kubectl
-  hosts: all
-  become: yes
-  tasks:
-    - name: Create Kubernetes repository file
-      copy:
-        content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
-        dest: /etc/apt/sources.list.d/kubernetes.list
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Add Kubernetes GPG key to APT keyring
-      become: true
-      apt_key:
-        url: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
-        state: present
-        validate_certs: yes
-        keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-
-    - name: Update APT cache
-      apt:
-        update_cache: yes
-
-    - name: Install kubectl
-      apt:
-        name: kubectl
-        state: present
-
-- name: Install minikube
-  hosts: all
-  become: yes
-  tasks:
-    - name: Download minikube deb package
-      get_url:
-        url: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
-        dest: /tmp/minikube_latest_amd64.deb
-
-    - name: Install minikube
-      apt:
-        deb: /tmp/minikube_latest_amd64.deb
-
-- name: Add current user to docker group
-  hosts: all
-  become: true
-  tasks:
-    - name: Add user to docker group
-      user:
-        name: "{{ ansible_env.SUDO_USER | default(ansible_env.USER) }}"
-        groups: docker
-        append: yes
-
-- name: Setup UFW
-  hosts: all
-  become: yes
-  tasks:
-    - name: SSH
+    - name: Setup UFW
       community.general.ufw:
         rule: limit
-        port: [ssh, 80, 443]
+        port: "{{ item }}"
         proto: tcp
-    - name: Enable UFW
-      community.general.ufw:
         state: enabled
+      loop:
+        - 22
+        - 80
+        - 443
+
+- name: Install k3s
+  hosts: all
+  become: yes
+  tasks:
+    - name: Run k3s installation script
+      shell: curl -sfL https://get.k3s.io | sh -
 
 - name: Setup Kubernetes Cluster
   hosts: all
-  become: no
+  become: yes
   tasks:
-    - name: Start Kubernetes Cluster
-      command: minikube start
-
     - name: Install kubernetes Python package with --break-system-packages
       pip:
         name: kubernetes
@@ -147,7 +90,9 @@
 
 - name: Install Taefik
   hosts: all
-  become: no
+  become: yes
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
     - name: Add Traefik Helm repository
       kubernetes.core.helm_repository:
@@ -157,10 +102,62 @@
     - name: Update Helm chart repository
       kubernetes.core.helm_repository:
         name: traefik
-        state: latest
+        state: present
+        repo_url: https://traefik.github.io/charts
+
+    - name: Create namespace for Traefik
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: traefik
+        state: present
+
+    - name: Copy Values file to the remote host
+      copy:
+        src: kubernetes/traefik-values.yml
+        dest: /tmp/traefik-values.yml
+
+    - name: Copy Cloudflare credentials to the remote host
+      copy:
+        src: kubernetes/secrets/cloudflare-credentials.yml
+        dest: /tmp/cloudflare-credentials.yml
+
+    - name: Create Cloudflare credentials secret
+      kubernetes.core.k8s:
+        state: present
+        definition: /tmp/cloudflare-credentials.yml
 
     - name: Install Traefik using Helm
       kubernetes.core.helm:
         name: traefik
         chart_ref: traefik/traefik
- # add kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+        release_namespace: kube-system
+        release_name: traefik
+        values_files:
+          - /tmp/traefik-values.yml
+
+- name: Install test Nextcloud instance
+  hosts: all
+  become: yes
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  tasks:
+    - name: Copy Nextcloud yaml to the remote host
+      copy:
+        src: kubernetes/nextcloud.yml
+        dest: /tmp/nextcloud.yml
+
+    - name: Create namespace for Nextcloud
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: nextdemand
+
+    - name: Apply Nextcloud yaml
+      kubernetes.core.k8s:
+        state: present
+        definition: /tmp/nextcloud.yml
+        

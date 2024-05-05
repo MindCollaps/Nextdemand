@@ -1,2 +1,3 @@
 *.inv
 .idea
+kubernetes/secrets/cloudflare-credentials.yml
