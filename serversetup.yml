@@ -169,6 +169,16 @@
           pull: yes
           path: /tmp/NextDemand
 
+    - name: Save Docker image
+      docker_image:
+        name: nextdemand
+        save: /tmp/nextdemand.tar
+
+    - name: Import Docker image to k3s
+      community.general.container.image_load:
+        src: /tmp/nextdemand.tar
+        dest: nextdemand
+
     - name: Create namespace for nextdemand
       kubernetes.core.k8s:
         state: present

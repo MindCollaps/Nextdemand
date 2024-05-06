@@ -56,7 +56,7 @@ spec:
               value: "nextdemand"
             - name: NXDEMAND_HOST
               value: "nextdemand.neoin.space"
-          image: nextdemand
+          image: nextdemand:nextdemand
 
 ---
 apiVersion: v1
