@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webserver
+  namespace: nextdemand
+  labels:
+    app: webserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webserver
+  template:
+    metadata:
+      labels:
+        app: webserver
+    spec:
+      containers:
+        - name: webserver
+          env:
+            - name: NXDEMAND_NAMESPACE
+              value: "nextdemand"
+            - name: NXDEMAND_HOST
+              value: "nextdemand.neoin.space"
+            - name: NXDEMAND_KUBECONFIG
+              value: /app/config/k3s.yaml
+          image: nextdemand
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+          ports:
+            - containerPort: 80
+            - containerPort: 6443
+              hostPort: 6443
+      volumes:
+        - name: config-volume
+          hostPath:
+            path: /etc/rancher/k3s/k3s.yaml
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webserver-service
+  namespace: nextdemand
+  labels:
+    app: webserver
+spec:
+    selector:
+        app: webserver
+    ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webserver-ingress
+  namespace: nextdemand
+  labels:
+    app: nextdemand
+spec:
+  rules:
+    - host: "nextdemand.neoin.space"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webserver-service
+                port:
+                  number: 80

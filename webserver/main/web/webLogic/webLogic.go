@@ -1,7 +1,7 @@
 package webLogic
 
 import (
-	"NextDemand/middleware"
+	"NextDemand/main/middleware"
 	"github.com/gin-gonic/gin"
 	"reflect"
 )

@@ -1,7 +1,8 @@
 package core
 
 import (
-	"NextDemand/web/env"
+	"NextDemand/main/web/env"
+	"NextDemand/main/web/webLogic"
 	"embed"
 	"github.com/gin-gonic/gin"
 	"io/fs"

@@ -1,0 +1,13 @@
+package env
+
+import "embed"
+
+var Files embed.FS
+
+const VERSION = "v0.0.1"
+const BANNER = ""
+
+var UNIX = false
+var Host string
+var NameSpace string
+var KubeConfig *string

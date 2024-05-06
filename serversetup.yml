@@ -41,6 +41,7 @@
         - curl
         - python3
         - python3-pip
+        - git
 
     - name: Install helm if not exists
       unarchive:
@@ -72,6 +73,11 @@
     - name: Run k3s installation script
       shell: curl -sfL https://get.k3s.io | sh -
 
+    - name: Make config file readable
+      file:
+        path: /etc/rancher/k3s/k3s.yaml
+        mode: 0644
+
 - name: Setup Kubernetes Cluster
   hosts: all
   become: yes
@@ -88,9 +94,9 @@
         repo_url: https://nextcloud.github.io/helm/
         state: present
 
-- name: Install Taefik
+- name: Install Traefik
   hosts: all
-  become: yes
+  become: no
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
@@ -136,18 +142,25 @@
         values_files:
           - /tmp/traefik-values.yml
 
-- name: Install test Nextcloud instance
-  hosts: all
-  become: yes
+- name: Setup Webserver
+  host: all
+  become: no
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
-    - name: Copy Nextcloud yaml to the remote host
-      copy:
-        src: kubernetes/nextcloud.yml
-        dest: /tmp/nextcloud.yml
+    - name: Clone NextDemand repository
+      git:
+        repo: https://github.com/MindCollaps/NextDemand
+        dest: /tmp/NextDemand
 
-    - name: Create namespace for Nextcloud
+    - name: Build NextDemand Docker image
+      docker_image:
+        name: nextdemand
+        path: /tmp/NextDemand/webserver
+        build:
+          pull: yes
+
+    - name: Create namespace for nextdemand
       kubernetes.core.k8s:
         state: present
         definition:
@@ -156,8 +169,7 @@
           metadata:
             name: nextdemand
 
-    - name: Apply Nextcloud yaml
+    - name: Apply Webserver yaml
       kubernetes.core.k8s:
         state: present
-        definition: /tmp/nextcloud.yml
-        
+        definition: /tmp/NextDemand/kubernetes/webserver.yml
