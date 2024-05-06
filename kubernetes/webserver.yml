@@ -1,3 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webserver-serviceaccount
+  namespace: nextdemand
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: webserver-k8s-access
+  namespace: nextdemand
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "deployments", "ingresses", "jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: webserver-k8s-access-binding
+  namespace: nextdemand
+subjects:
+  - kind: ServiceAccount
+    name: webserver-serviceaccount
+    namespace: nextdemand
+roleRef:
+  kind: ClusterRole
+  name: webserver-k8s-access
+  apiGroup: rbac.authorization.k8s.io
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +48,7 @@ spec:
       labels:
         app: webserver
     spec:
+      serviceAccountName: webserver-serviceaccount
       containers:
         - name: webserver
           env:
@@ -22,20 +56,7 @@ spec:
               value: "nextdemand"
             - name: NXDEMAND_HOST
               value: "nextdemand.neoin.space"
-            - name: NXDEMAND_KUBECONFIG
-              value: /app/config/k3s.yaml
           image: nextdemand
-          volumeMounts:
-            - name: config-volume
-              mountPath: /app/config
-          ports:
-            - containerPort: 80
-            - containerPort: 6443
-              hostPort: 6443
-      volumes:
-        - name: config-volume
-          hostPath:
-            path: /etc/rancher/k3s/k3s.yaml
 
 ---
 apiVersion: v1

@@ -7,12 +7,12 @@ import (
 	"NextDemand/main/web/env"
 	"embed"
 	"flag"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"k8s.io/client-go/util/homedir"
 	"log"
 	"os"
-	"path/filepath"
+	"strconv"
 )
 
 //go:embed main/web/*
@@ -34,7 +34,11 @@ func main() {
 	environmentSetup()
 
 	//Kubernetes setup
-	kubernetes.Init(env.KubeConfig)
+	if env.Testing {
+		fmt.Println("!!! Server is running in testing mode - kubernetes functions are disabled!")
+	} else {
+		kubernetes.Init()
+	}
 
 	//Gin setup
 	r := gin.Default()
@@ -42,20 +46,17 @@ func main() {
 	core.LoadServerAssets(r)
 
 	router.InitRouter(r)
+
+	r.Run("127.0.0.1:" + strconv.Itoa(env.Port))
 }
 
 func flags() {
-	if home := homedir.HomeDir(); home != "" {
-		env.KubeConfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		env.KubeConfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-
-	env.NameSpace = *flag.String("namespace", "default", "namespace to use")
-	env.Host = *flag.String("host", "127.0.0.1", "host to use")
+	flag.StringVar(&env.NameSpace, "namespace", "default", "namespace to use")
+	flag.StringVar(&env.Host, "host", "127.0.0.1", "host to use")
+	flag.BoolVar(&env.Testing, "test", false, "testing mode")
+	flag.IntVar(&env.Port, "port", 8080, "port to use")
 
 	flag.Parse()
-
 }
 
 func environmentSetup() {
@@ -64,17 +65,25 @@ func environmentSetup() {
 		envLocation = "/etc/nxdemand/.env"
 	}
 
-	if !isFlagPassed("kubeconfig") && os.Getenv("NXDEMAND_KUBECONFIG") != "" {
-		config := os.Getenv("NXDEMAND_KUBECONFIG")
-		env.KubeConfig = &config
-	}
-
 	if !isFlagPassed("namespace") && os.Getenv("NXDEMAND_NAMESPACE") != "" {
 		env.NameSpace = os.Getenv("NXDEMAND_NAMESPACE")
 	}
 
 	if !isFlagPassed("host") && os.Getenv("NXDEMAND_HOST") != "" {
 		env.Host = os.Getenv("NXDEMAND_HOST")
+	}
+
+	if !isFlagPassed("test") && os.Getenv("TESTING") == "true" {
+		env.Testing = true
+	}
+
+	if !isFlagPassed("port") && os.Getenv("NXDEMAND_PORT") != "" {
+		port, err := strconv.Atoi(os.Getenv("NXDEMAND_PORT"))
+		if err != nil {
+			log.Println("Invalid port specified in .env file")
+		} else {
+			env.Port = port
+		}
 	}
 
 	if err := godotenv.Load(envLocation); err != nil {

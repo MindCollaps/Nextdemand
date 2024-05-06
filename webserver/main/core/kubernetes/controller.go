@@ -9,14 +9,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 	"os"
 )
 
 var ClientSet *dynamic.DynamicClient
 
-func Init(kubeconfig *string) {
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+func Init() {
+	config, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -51,7 +51,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	//Change metadata label instanceId
 	deployment.Object["job"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 	//Change metadata label instanceId in spec
-	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["templates"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 
 	//Service deployment
 	//Change service name to include instanceId

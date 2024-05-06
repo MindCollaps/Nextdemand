@@ -21,10 +21,10 @@ func LoadTemplates(r *gin.Engine) {
 	// Load templates files
 	templateFiles := []string{}
 
-	// Check if base template exists
+	// Check if base templates exists
 	_, err := fs.ReadFile(env.Files, "main/web/templates/base.gohtml")
 	if err != nil {
-		panic("Base template not found, ensure it exists in main/web/templates/base.gohtml")
+		panic("Base templates not found, ensure it exists in main/web/templates/base.gohtml")
 	}
 
 	templateFiles = append(templateFiles, "main/web/templates/base.gohtml")
@@ -57,7 +57,7 @@ func LoadTemplates(r *gin.Engine) {
 
 	// Walk through the "public" folder and all its subdirectories
 	err = WalkFS(env.Files, "main/web/public", func(path string, name string, isDir bool) error {
-		// Check if the file is an HTML template
+		// Check if the file is an HTML templates
 		if !isDir && strings.HasSuffix(name, ".gohtml") {
 			// Get the directory path (relative to the "public" folder)
 			relPath, err := RelFS("main/web/public", path)
@@ -129,7 +129,7 @@ func handler(c *gin.Context) {
 	if err != nil {
 		// If there's an error executing the templates, return a 500 error
 		c.String(http.StatusInternalServerError, "Internal Server Error")
-		log.Println("Error executing template:", err)
+		log.Println("Error executing templates:", err)
 		return
 	}
 }

@@ -10,4 +10,5 @@ const BANNER = ""
 var UNIX = false
 var Host string
 var NameSpace string
-var KubeConfig *string
+var Testing = false
+var Port = 80

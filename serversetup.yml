@@ -42,6 +42,7 @@
         - python3
         - python3-pip
         - git
+        - docker.io
 
     - name: Install helm if not exists
       unarchive:
@@ -84,9 +85,13 @@
   tasks:
     - name: Install kubernetes Python package with --break-system-packages
       pip:
-        name: kubernetes
+        name: "{{ item }}"
         state: present
         extra_args: "--break-system-packages"
+      loop:
+        - kubernetes
+        - openshift
+        - PyYAML
     
     - name: Add Nextcloud Helm repository
       kubernetes.core.helm_repository:
@@ -96,7 +101,7 @@
 
 - name: Install Traefik
   hosts: all
-  become: no
+  become: yes
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
@@ -127,15 +132,16 @@
       copy:
         src: kubernetes/secrets/cloudflare-credentials.yml
         dest: /tmp/cloudflare-credentials.yml
+        mode: 0644
+        owner: "{{ ansible_user }}"
 
     - name: Create Cloudflare credentials secret
       kubernetes.core.k8s:
-        state: present
-        definition: /tmp/cloudflare-credentials.yml
+        apply: yes
+        src: /tmp/cloudflare-credentials.yml
 
     - name: Install Traefik using Helm
       kubernetes.core.helm:
-        name: traefik
         chart_ref: traefik/traefik
         release_namespace: kube-system
         release_name: traefik
@@ -143,7 +149,7 @@
           - /tmp/traefik-values.yml
 
 - name: Setup Webserver
-  host: all
+  hosts: all
   become: no
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
@@ -156,10 +162,12 @@
     - name: Build NextDemand Docker image
       become: yes
       docker_image:
+        tag: nextdemand
         name: nextdemand
-        path: /tmp/NextDemand/webserver
+        source: build
         build:
           pull: yes
+          path: /tmp/NextDemand
 
     - name: Create namespace for nextdemand
       kubernetes.core.k8s:
@@ -173,4 +181,4 @@
     - name: Apply Webserver yaml
       kubernetes.core.k8s:
         state: present
-        definition: /tmp/NextDemand/kubernetes/webserver.yml
+        src: /tmp/NextDemand/kubernetes/webserver.yml
