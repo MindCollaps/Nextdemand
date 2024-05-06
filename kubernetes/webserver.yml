@@ -56,7 +56,9 @@ spec:
               value: "nextdemand"
             - name: NXDEMAND_HOST
               value: "nextdemand.neoin.space"
-          image: nextdemand:nextdemand
+            - name: NXDEMAND_PORT
+              value: "80"
+          image: nextdemand:latest
 
 ---
 apiVersion: v1

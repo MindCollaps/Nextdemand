@@ -143,7 +143,7 @@
     - name: Install Traefik using Helm
       kubernetes.core.helm:
         chart_ref: traefik/traefik
-        release_namespace: kube-system
+        release_namespace: traefik
         release_name: traefik
         values_files:
           - /tmp/traefik-values.yml
@@ -165,19 +165,14 @@
         tag: nextdemand
         name: nextdemand
         source: build
+        archive_path: /tmp/nextdemand.tar
         build:
           pull: yes
           path: /tmp/NextDemand
 
-    - name: Save Docker image
-      docker_image:
-        name: nextdemand
-        save: /tmp/nextdemand.tar
-
     - name: Import Docker image to k3s
-      community.general.container.image_load:
-        src: /tmp/nextdemand.tar
-        dest: nextdemand
+      become: yes
+      command: k3s ctr images import /tmp/nextdemand.tar
 
     - name: Create namespace for nextdemand
       kubernetes.core.k8s:
