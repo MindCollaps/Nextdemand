@@ -154,6 +154,7 @@
         dest: /tmp/NextDemand
 
     - name: Build NextDemand Docker image
+      become: yes
       docker_image:
         name: nextdemand
         path: /tmp/NextDemand/webserver
