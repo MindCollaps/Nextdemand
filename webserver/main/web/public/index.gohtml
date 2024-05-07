@@ -116,26 +116,36 @@
                 },
                 checkerTask() {
                     setTimeout(async () => {
-                        let url = this.instanceId + "." + window.location.hostname;
+                        let url = "https://" + this.instanceId + "." + window.location.hostname;
+                        console.log("Checking: " + url)
+
                         let response = await fetch(url, {
                             method: 'GET',
                             headers: {
                                 'Content-Type': 'text/html'
                             },
+                            mode: "no-cors"
                         }).then((res) => {
-                            return res
-                        })
-                        if (response.status === 200) {
-                            window.location.href = url;
-                        } else {
+                            if (res.status === 200) {
+                                return true;
+                            }
+                        }).catch((err) => {
+                            //This is true, because we will get a certificate error if the is up instead of 404
+                            return true;
+                        }).finally(() => {
+                            return false;
+                        });
+
+                        if (!response)
                             this.checkerTask();
-                        }
+                        else
+                            window.location = url;
                     }, 2000);
                 },
                 waitingFunc() {
                     //timeout
                     setTimeout(() => {
-                        this.waitingText = this.waitingTexts[Math.floor(Math.random() * this.waitingTexts.length-1)];
+                        this.waitingText = this.waitingTexts[Math.floor(Math.random() * this.waitingTexts.length - 1)];
                         this.waitingFunc();
                     }, 8000);
                 }
