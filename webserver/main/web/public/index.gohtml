@@ -2,28 +2,145 @@
 {{define "metaDescription"}}Next Demand, your demand of your own Cloud can be provided right HERE!{{end}}
 {{define "content"}}
     {{template "topdoc"}}
-    <div class="h-100 w-100 d-flex flex-column justify-content-center">
-        <div class="d-flex justify-content-center align-items-center h-100">
+    <div id="app" class="h-100 w-100 d-flex flex-column justify-content-center">
+        <div v-if="retarded()" class="absolut"><img :style="retardedSize()" src="/assets/pepemeimei.jpg"></div>
+        <div v-if="!waiting" class="d-flex justify-content-center align-items-center h-100">
             <div class="d-flex justify-content-center flex-column w-100 h-100">
                 <div class="d-flex flex-column ">
-                    <div class="d-flex justify-content-center align-items-center">
+                    <div class="d-flex justify-content-center align-items-center mb-5">
                         <img class="me-2 theimage" style="width: 10vh" src="/favicon.ico"
                              alt="">
                         <div class="text-white mb-0 me-4 fs-2 welcome">Welcome to</div>
-                        <div class="aso me-2 position-relative text-white fs-1">Next Demand</div>
-                        <div class="ist me-2 position-relative text-white fs-5">Stupid</div>
+                        <div class="aso me-3 position-relative text-white fs-1">Next Demand</div>
+                        <div class="ist me-3 position-relative text-white fs-5">Stupid</div>
                         <div class="das position-relative text-white fs-5">Short lived</div>
                     </div>
+                    <div class="d-flex justify-content-center align-items-center mt-5 mb-3">
+                        <h5>Spawn your own Cloud instance NOW!</h5>
+                    </div>
                     <div class="d-flex justify-content-center align-items-center mt-5">
-                        <a href="/login" class="btn btn-primary thebtn">Login</a>
+                        <div class="obj" @click="press()"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div v-if="waiting" class="d-flex flex-column justify-content-center align-items-center h-100">
+            <div class="spinner-grow" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">
+                <p>${waitingText}</p>
             </div>
         </div>
         {{template "footer"}}
     </div>
 
+    <style>
+        /*https://codepen.io/homes107/pen/ogNpXy*/
+        .obj {
+            width: 100px;
+            height: 100px;
+            margin-left: -50px;
+            margin-top: -50px;
+            left: 50%;
+            top: 50%;
+            position: absolute;
+            background: #e55050;
+            border-radius: 100px;
+            box-shadow: inset -2px 2px 2px 0px #ef9393, inset 2px -2px 2px 0px rgba(113, 17, 17, 0.3), inset 0px 0px 40px 15px #de2424, 1px 1px 0 0 #d32020, 2px 2px 0 0 #c61e1e, 3px 3px 0 0 #b81c1c, 4px 4px 0 0 #ab1a1a, 5px 5px 0 0 #9e1818, 6px 6px 0 0 #901616, 7px 7px 0 0 #881414, 8px 8px 0 0 #831414, 9px 9px 0 0 #7f1313, 10px 10px 0 0 #7a1212, 11px 11px 0 0 #761212, 12px 12px 0 0 #711111, 13px 13px 0 0 #711111, 14px 14px 0 0 #711111, 15px 15px 0 0 #711111, 16px 16px 0 0 #711111, 17px 17px 0 0 #711111, 18px 18px 0 0 #711111, 19px 19px 0 0 #711111, 20px 20px 0 0 #711111, 19px 21px 1pc 1px rgba(113, 17, 17, 0.1), 18px 22px 1px 1px rgba(113, 17, 17, 0.1), 17px 23px 1px 1px rgba(113, 17, 17, 0.1), 16px 24px 1px 1px rgba(113, 17, 17, 0.1), 15px 25px 1px 1px rgba(113, 17, 17, 0.1), 14px 26px 2px 1px rgba(113, 17, 17, 0.1), 13px 27px 3px 1px rgba(113, 17, 17, 0.1), 12px 28px 4px 1px rgba(113, 17, 17, 0.1), 11px 29px 5px 1px rgba(113, 17, 17, 0.1), 10px 30px 6px 1px rgba(113, 17, 17, 0.1), 9px 31px 7px 1px rgba(113, 17, 17, 0.1), 20px 20px 4px 1px #711111;
+            transition: all 0.3s ease;
+        }
+
+        .obj:active {
+            margin-left: -31px;
+            margin-top: -31px;
+            background: #e86666;
+            box-shadow: inset -2px 2px 2px 0px #ef9393, inset 2px -2px 2px 0px rgba(113, 17, 17, 0.3), inset 0px 0px 40px 15px #de2424, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 0 0 #711111, 1px 1px 2px 1px rgba(113, 17, 17, 0.5), 0px 0px 4px 1px #711111;
+        }
+    </style>
+
     <script>
+        var app = Vue.createApp({
+            delimiters: ['${', '}'],
+            data: () => ({
+                pressed: 0,
+                waiting: false,
+                failed: false,
+                instanceId: "",
+                waitingText: "Waiting for instance to spawn...",
+                waitingTexts: [
+                    "Contemplating the meaning of life while Kubernetes does its thing...",
+                    "Sending positive vibes to Kubernetes so it works faster...",
+                    "Hoping Kubernetes is having a good day and decides to spin up our instance...",
+                    "Chatting with Kubernetes about its weekend plans...",
+                    "Playing some elevator music while Kubernetes gets its act together...",
+                    "Kubernetes, please don't take this personally, but can you hurry up already?",
+                    "Kubernetes, you're doing great! Just a bit faster would be nice...",
+                    "Trying to bribe Kubernetes with virtual cookies to speed things along...",
+                    "Sending virtual hugs to Kubernetes to encourage faster deployment...",
+                    "Counting the minutes until Kubernetes finally finishes its coffee break...",
+
+                ]
+            }),
+            methods: {
+                async press() {
+                    this.pressed++
+                    if (this.waiting || this.failed) return;
+                    let response = await fetch('/spawn', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                    }).then((res) => {
+                        return res;
+                    });
+
+                    const data = await response.json();
+                    if (response.status === 200) {
+                        this.waiting = true;
+                        this.instanceId = data.uid;
+                        this.waitingFunc()
+                        this.checkerTask()
+                    } else {
+                        this.failed = true;
+                    }
+                },
+                retarded() {
+                    return this.pressed > 10;
+                },
+                retardedSize() {
+                    return {
+                        width: Math.pow(this.pressed, 2) + "px",
+                        height: Math.pow(this.pressed, 2) + "px"
+                    };
+                },
+                checkerTask() {
+                    setTimeout(async () => {
+                        let url = this.instanceId + "." + window.location.hostname;
+                        let response = await fetch(url, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'text/html'
+                            },
+                        }).then((res) => {
+                            return res
+                        })
+                        if (response.status === 200) {
+                            window.location.href = url;
+                        } else {
+                            this.checkerTask(instanceId);
+                        }
+                    }, 2000);
+                },
+                waitingFunc() {
+                    //timeout
+                    setTimeout(() => {
+                        this.waitingText = this.waitingTexts[Math.floor(Math.random() * this.waitingTexts.length-1)];
+                        this.waitingFunc();
+                    }, 8000);
+                }
+            }
+        }).mount('#app')
         setTimeout(function () {
             anime({
                 targets: '.aso',

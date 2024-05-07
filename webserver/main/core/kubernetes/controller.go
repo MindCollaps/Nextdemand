@@ -4,6 +4,7 @@ import (
 	"NextDemand/main/web/env"
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -31,7 +32,30 @@ func Init() {
 
 func Test() {
 	fmt.Println("Testing mode")
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Test failed - but thats normal since we dont have a kubernetes cluster running in testing mode")
+		}
+	}()
 	SpawnNewNextcloudDeployment("test")
+}
+
+func GetRandomId() (string, error) {
+	uid := uuid.New()
+
+	count := 0
+	for {
+		jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+		_, err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Get(context.TODO(), "nextcloud-job-"+uid.String(), metav1.GetOptions{})
+		if err == nil {
+			return GetRandomId()
+		}
+		count++
+		if count > 10 {
+			return "", fmt.Errorf("Failed to generate unique id")
+		}
+	}
 }
 
 func SpawnNewNextcloudDeployment(instanceId string) {
@@ -84,7 +108,21 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
 	job := unstructured.Unstructured{Object: deployment.Object["job"].(map[string]interface{})}
 
-	fmt.Println(job)
+	//Output job as json formatted string
+	json, _ := job.MarshalJSON()
+	fmt.Println(string(json))
+
+	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	service := unstructured.Unstructured{Object: deployment.Object["service"].(map[string]interface{})}
+
+	json, _ = service.MarshalJSON()
+	fmt.Println(string(json))
+
+	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+	ingress := unstructured.Unstructured{Object: deployment.Object["ingress"].(map[string]interface{})}
+
+	json, _ = ingress.MarshalJSON()
+	fmt.Println(string(json))
 
 	_, err = ClientSet.Resource(jobRes).Namespace(env.NameSpace).Create(context.TODO(), &job, metav1.CreateOptions{})
 	if err != nil {
@@ -93,11 +131,6 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 
 	fmt.Println("Created job")
 
-	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
-	service := unstructured.Unstructured{Object: deployment.Object["service"].(map[string]interface{})}
-
-	fmt.Println(service)
-
 	_, err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Create(context.TODO(), &service, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating service:", err)
@@ -105,15 +138,31 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 
 	fmt.Println("Created service")
 
-	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
-	ingress := unstructured.Unstructured{Object: deployment.Object["ingress"].(map[string]interface{})}
-
-	fmt.Println(ingress)
-
 	_, err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Create(context.TODO(), &ingress, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating ingress:", err)
 	}
 
 	fmt.Println("Created ingress")
+}
+
+func DeleteInstance(instanceId string) {
+	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+
+	err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-job-"+instanceId, metav1.DeleteOptions{})
+	if err != nil {
+		fmt.Println("Error deleting job:", err)
+	}
+
+	err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-service-"+instanceId, metav1.DeleteOptions{})
+	if err != nil {
+		fmt.Println("Error deleting service:", err)
+	}
+
+	err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-ingress-"+instanceId, metav1.DeleteOptions{})
+	if err != nil {
+		fmt.Println("Error deleting ingress:", err)
+	}
 }

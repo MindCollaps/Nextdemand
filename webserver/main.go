@@ -4,6 +4,7 @@ import (
 	"NextDemand/main/core"
 	"NextDemand/main/core/kubernetes"
 	"NextDemand/main/router"
+	"NextDemand/main/tasks"
 	"NextDemand/main/web/env"
 	"embed"
 	"flag"
@@ -40,6 +41,9 @@ func main() {
 	} else {
 		kubernetes.Init()
 	}
+
+	//Checker tasks
+	tasks.StartRepeatingTasks()
 
 	//Gin setup
 	r := gin.Default()

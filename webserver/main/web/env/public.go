@@ -12,3 +12,4 @@ var Host string
 var NameSpace string
 var Testing = false
 var Port = 80
+var TimeAlive = 5
