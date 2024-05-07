@@ -86,7 +86,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 
 	fmt.Println(job)
 
-	result, err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Create(context.TODO(), &job, metav1.CreateOptions{})
+	_, err = ClientSet.Resource(jobRes).Namespace(env.NameSpace).Create(context.TODO(), &job, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating job:", err)
 	}
@@ -98,7 +98,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 
 	fmt.Println(service)
 
-	result, err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Create(context.TODO(), &service, metav1.CreateOptions{})
+	_, err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Create(context.TODO(), &service, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating service:", err)
 	}
@@ -110,7 +110,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 
 	fmt.Println(ingress)
 
-	result, err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Create(context.TODO(), &ingress, metav1.CreateOptions{})
+	_, err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Create(context.TODO(), &ingress, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating ingress:", err)
 	}
