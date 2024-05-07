@@ -58,7 +58,7 @@
 
     - name: Setup UFW
       community.general.ufw:
-        rule: limit
+        rule: allow
         port: "{{ item }}"
         proto: tcp
         state: enabled
@@ -73,11 +73,6 @@
   tasks:
     - name: Run k3s installation script
       shell: curl -sfL https://get.k3s.io | sh -
-
-    - name: Make config file readable
-      file:
-        path: /etc/rancher/k3s/k3s.yaml
-        mode: 0644
 
 - name: Setup Kubernetes Cluster
   hosts: all
@@ -143,14 +138,14 @@
     - name: Install Traefik using Helm
       kubernetes.core.helm:
         chart_ref: traefik/traefik
-        release_namespace: traefik
+        release_namespace: kube-system
         release_name: traefik
         values_files:
           - /tmp/traefik-values.yml
 
 - name: Setup Webserver
   hosts: all
-  become: no
+  become: yes
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
@@ -160,7 +155,6 @@
         dest: /tmp/NextDemand
 
     - name: Build NextDemand Docker image
-      become: yes
       docker_image:
         tag: nextdemand
         name: nextdemand
@@ -171,7 +165,6 @@
           path: /tmp/NextDemand
 
     - name: Import Docker image to k3s
-      become: yes
       command: k3s ctr images import /tmp/nextdemand.tar
 
     - name: Create namespace for nextdemand

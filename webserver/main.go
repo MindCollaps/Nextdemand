@@ -47,7 +47,7 @@ func main() {
 
 	router.InitRouter(r)
 
-	r.Run("127.0.0.1:" + strconv.Itoa(env.Port))
+	r.Run(":" + strconv.Itoa(env.Port))
 }
 
 func flags() {
