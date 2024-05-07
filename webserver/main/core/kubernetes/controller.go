@@ -47,14 +47,15 @@ func GetRandomId() (string, error) {
 	count := 0
 	for {
 		jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
-		_, err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Get(context.TODO(), "nextcloud-job-"+uid.String(), metav1.GetOptions{})
-		if err == nil {
+		data, _ := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Get(context.TODO(), "nextcloud-job-"+uid.String(), metav1.GetOptions{})
+		if data == nil {
 			return uid.String(), nil
 		}
 		count++
 		if count > 10 {
 			return "", fmt.Errorf("Failed to generate unique id")
 		}
+		uid = uuid.New()
 	}
 }
 

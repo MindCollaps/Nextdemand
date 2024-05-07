@@ -2,6 +2,7 @@ package router
 
 import (
 	"NextDemand/main/core/kubernetes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -25,6 +26,7 @@ func InitRouter(r *gin.Engine) {
 
 		uid, err := kubernetes.GetRandomId()
 		if err != nil {
+			fmt.Println(err)
 			c.JSON(500, gin.H{
 				"message": "Internal server error - kubernetes error",
 			})
