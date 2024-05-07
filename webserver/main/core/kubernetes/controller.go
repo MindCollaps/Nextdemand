@@ -29,8 +29,18 @@ func Init() {
 	ClientSet = clientset
 }
 
+func Test() {
+	fmt.Println("Testing mode")
+	SpawnNewNextcloudDeployment("test")
+}
+
 func SpawnNewNextcloudDeployment(instanceId string) {
-	yamlData, err := os.ReadFile("./nextcloud.yml")
+	fmt.Println("Spawning new Nextcloud deployment with instanceId:" + instanceId)
+	var yamlData, err = os.ReadFile("./nextcloud.yml")
+	if env.Testing {
+		yamlData, err = os.ReadFile("../kubernetes/nextcloud.yml")
+
+	}
 	if err != nil {
 		fmt.Println("Error reading YAML file:", err)
 		return
@@ -51,7 +61,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	//Change metadata label instanceId
 	deployment.Object["job"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 	//Change metadata label instanceId in spec
-	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["templates"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 
 	//Service deployment
 	//Change service name to include instanceId
@@ -74,6 +84,8 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
 	job := unstructured.Unstructured{Object: deployment.Object["job"].(map[string]interface{})}
 
+	fmt.Println(job)
+
 	result, err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Create(context.TODO(), &job, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating job:", err)
@@ -84,6 +96,8 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	service := unstructured.Unstructured{Object: deployment.Object["service"].(map[string]interface{})}
 
+	fmt.Println(service)
+
 	result, err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Create(context.TODO(), &service, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating service:", err)
@@ -93,6 +107,8 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 
 	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
 	ingress := unstructured.Unstructured{Object: deployment.Object["ingress"].(map[string]interface{})}
+
+	fmt.Println(ingress)
 
 	result, err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Create(context.TODO(), &ingress, metav1.CreateOptions{})
 	if err != nil {

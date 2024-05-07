@@ -36,6 +36,7 @@ func main() {
 	//Kubernetes setup
 	if env.Testing {
 		fmt.Println("!!! Server is running in testing mode - kubernetes functions are disabled!")
+		kubernetes.Test()
 	} else {
 		kubernetes.Init()
 	}
