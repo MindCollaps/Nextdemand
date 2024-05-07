@@ -91,7 +91,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 		fmt.Println("Error creating job:", err)
 	}
 
-	fmt.Printf("Created job %q.\n", result.GetName())
+	fmt.Println("Created job")
 
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	service := unstructured.Unstructured{Object: deployment.Object["service"].(map[string]interface{})}
@@ -103,7 +103,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 		fmt.Println("Error creating service:", err)
 	}
 
-	fmt.Printf("Created service %q.\n", result.GetName())
+	fmt.Println("Created service")
 
 	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
 	ingress := unstructured.Unstructured{Object: deployment.Object["ingress"].(map[string]interface{})}
@@ -115,5 +115,5 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 		fmt.Println("Error creating ingress:", err)
 	}
 
-	fmt.Printf("Created ingress %q.\n", result.GetName())
+	fmt.Println("Created ingress")
 }
