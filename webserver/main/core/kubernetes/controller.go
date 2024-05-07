@@ -49,7 +49,7 @@ func GetRandomId() (string, error) {
 		jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
 		_, err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Get(context.TODO(), "nextcloud-job-"+uid.String(), metav1.GetOptions{})
 		if err == nil {
-			return GetRandomId()
+			return uid.String(), nil
 		}
 		count++
 		if count > 10 {

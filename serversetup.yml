@@ -100,24 +100,6 @@
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
-    - name: Add Traefik Helm repository
-      kubernetes.core.helm_repository:
-        name: traefik
-        repo_url: https://traefik.github.io/charts
-
-    - name: Update Helm chart repository
-      kubernetes.core.helm_repository:
-        name: traefik
-        state: present
-        repo_url: https://traefik.github.io/charts
-
-    - name: Create namespace for Traefik
-      kubernetes.core.k8s:
-        api_version: v1
-        kind: Namespace
-        name: traefik
-        state: present
-
     - name: Copy Values file to the remote host
       copy:
         src: kubernetes/traefik-values.yml
@@ -135,13 +117,23 @@
         apply: yes
         src: /tmp/cloudflare-credentials.yml
 
-    - name: Install Traefik using Helm
-      kubernetes.core.helm:
-        chart_ref: traefik/traefik
-        release_namespace: kube-system
-        release_name: traefik
-        values_files:
-          - /tmp/traefik-values.yml
+    - name: Apply traefik values to running instance Step 1
+      ansible.builtin.shell:
+        cmd: cat /tmp/traefik-values.yml
+      register: values_file_content
+
+    - name: Apply traefik values to running instance Step 2
+      kubernetes.core.k8s:
+        state: present
+        namespace: kube-system
+        definition:
+          apiVersion: helm.cattle.io/v1
+          kind: HelmChartConfig
+          metadata:
+            name: traefik
+            namespace: kube-system
+          spec:
+            valuesContent: "{{ values_file_content.stdout }}"
 
 - name: Setup Webserver
   hosts: all
