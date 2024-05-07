@@ -28,6 +28,7 @@ func Init() {
 	}
 
 	ClientSet = clientset
+	DeleteAllRunning()
 }
 
 func Test() {
@@ -145,6 +146,33 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	}
 
 	fmt.Println("Created ingress")
+}
+
+func DeleteAllRunning() {
+	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+
+	err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
+		LabelSelector: "app=nextcloud",
+	})
+	if err != nil {
+		fmt.Println("Error deleting jobs:", err)
+	}
+
+	err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
+		LabelSelector: "app=nextcloud",
+	})
+	if err != nil {
+		fmt.Println("Error deleting services:", err)
+	}
+
+	err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
+		LabelSelector: "app=nextcloud",
+	})
+	if err != nil {
+		fmt.Println("Error deleting ingresses:", err)
+	}
 }
 
 func DeleteInstance(instanceId string) {
