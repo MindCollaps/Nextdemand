@@ -26,9 +26,6 @@ job:
                 value: "admin"
               - name: NEXTCLOUD_ADMIN_PASSWORD
                 value: "default"
-            volumeMounts:
-              - name: nextcloud-data
-                mountPath: /var/www/html/data/admin/files/Photos
         initContainers:
           - name: nextcloud-init
             image: nextcloud
