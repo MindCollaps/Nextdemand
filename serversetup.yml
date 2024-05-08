@@ -70,6 +70,8 @@
 - name: Setup Kubernetes Cluster
   hosts: all
   become: yes
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
     - name: Ensure the directory exists
       file:
@@ -82,9 +84,6 @@
         src: kubernetes/secrets/traefik-config.yml
         dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
 
-    - name: Run k3s installation script
-      shell: curl -sfL https://get.k3s.io | sh -
-
     - name: Install kubernetes Python package with --break-system-packages
       pip:
         name: "{{ item }}"
@@ -95,22 +94,17 @@
         - openshift
         - PyYAML
 
-    # k8s doesnt know HelmChartConfig, so we need to apply the config manually
-    - name: Apply Traefik values config
-      shell: kubectl apply -f /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
-    
-    - name: Add Nextcloud Helm repository
-      kubernetes.core.helm_repository:
-        name: nextcloud
-        repo_url: https://nextcloud.github.io/helm/
-        state: present
+    - name: Run k3s installation script
+      shell: curl -sfL https://get.k3s.io | sh -
 
-- name: Setup Traefik
-  hosts: all
-  become: yes
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-  tasks:
+    # Wait for k3s to start and traefik to be ready
+    - name: Wait for k3s to start
+      wait_for:
+        host: localhost
+        port: 6443
+        delay: 5
+        timeout: 60
+
     - name: Copy Cloudflare credentials to the remote host
       copy:
         src: kubernetes/secrets/cloudflare-credentials.yml
@@ -122,6 +116,24 @@
       kubernetes.core.k8s:
         apply: yes
         src: /tmp/cloudflare-credentials.yml
+
+    - name: Wait for traefik to be ready - this can take a while ...
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        api_version: apps/v1
+        wait: yes
+        wait_timeout: 60
+        label_selectors:
+          - app.kubernetes.io/name: traefik
+        wait_condition:
+          type: Ready
+          status: "True"
+    
+    - name: Add Nextcloud Helm repository
+      kubernetes.core.helm_repository:
+        name: nextcloud
+        repo_url: https://nextcloud.github.io/helm/
+        state: present
 
 - name: Setup Webserver
   hosts: all

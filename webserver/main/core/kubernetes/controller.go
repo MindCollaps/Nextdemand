@@ -184,6 +184,7 @@ func DeleteAllRunning() {
 	err = ClientSet.Resource(pod).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
 		LabelSelector: "app=nextcloud",
 	})
+
 	if err != nil {
 		fmt.Println("Error deleting pods:", err)
 	}
@@ -213,6 +214,9 @@ func DeleteInstance(instanceId string) {
 	err = ClientSet.Resource(pod).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
 		LabelSelector: "instanceId=" + instanceId,
 	})
+
+	err = ClientSet.Resource(pod).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-job-"+instanceId, metav1.DeleteOptions{})
+
 	if err != nil {
 		fmt.Println("Error deleting pods:", err)
 	}
