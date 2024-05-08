@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"math/rand"
 	"os"
 )
 
@@ -60,7 +61,7 @@ func GetRandomId() (string, error) {
 	}
 }
 
-func SpawnNewNextcloudDeployment(instanceId string) {
+func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	fmt.Println("Spawning new Nextcloud deployment with instanceId:" + instanceId)
 	var yamlData, err = os.ReadFile("./nextcloud.yml")
 	if env.Testing {
@@ -69,7 +70,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	}
 	if err != nil {
 		fmt.Println("Error reading YAML file:", err)
-		return
+		return "", err
 	}
 
 	// Define the deployment structure
@@ -78,7 +79,7 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	// Unmarshal YAML data into the deployment structure
 	if err := yaml.Unmarshal(yamlData, &deployment.Object); err != nil {
 		fmt.Println("Error unmarshaling YAML:", err)
-		return
+		return "", err
 	}
 
 	//Job deployment
@@ -88,6 +89,9 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	deployment.Object["job"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 	//Change metadata label instanceId in spec
 	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+	//Change default password
+	password := generateRandomPassword(8)
+	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["env"].([]interface{})[1].(map[string]interface{})["value"] = password
 
 	//Service deployment
 	//Change service name to include instanceId
@@ -146,12 +150,15 @@ func SpawnNewNextcloudDeployment(instanceId string) {
 	}
 
 	fmt.Println("Created ingress")
+
+	return password, nil
 }
 
 func DeleteAllRunning() {
 	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 
 	err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
 		LabelSelector: "app=nextcloud",
@@ -173,12 +180,20 @@ func DeleteAllRunning() {
 	if err != nil {
 		fmt.Println("Error deleting ingresses:", err)
 	}
+
+	err = ClientSet.Resource(pod).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
+		LabelSelector: "app=nextcloud",
+	})
+	if err != nil {
+		fmt.Println("Error deleting pods:", err)
+	}
 }
 
 func DeleteInstance(instanceId string) {
 	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 
 	err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-job-"+instanceId, metav1.DeleteOptions{})
 	if err != nil {
@@ -194,4 +209,20 @@ func DeleteInstance(instanceId string) {
 	if err != nil {
 		fmt.Println("Error deleting ingress:", err)
 	}
+
+	err = ClientSet.Resource(pod).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
+		LabelSelector: "instanceId=" + instanceId,
+	})
+	if err != nil {
+		fmt.Println("Error deleting pods:", err)
+	}
+}
+
+func generateRandomPassword(size int) string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%&")
+	b := make([]rune, size)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

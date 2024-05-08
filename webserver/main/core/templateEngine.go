@@ -86,6 +86,8 @@ func LoadTemplates(r *gin.Engine) {
 			parsing = append(parsing, templateFiles...)
 			parsing = append(parsing, path)
 
+			templateName = strings.TrimSuffix(templateName, "/")
+
 			if templateName == "" {
 				templateName = "."
 			}

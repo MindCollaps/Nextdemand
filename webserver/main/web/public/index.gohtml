@@ -4,7 +4,7 @@
     {{template "topdoc"}}
     <div id="app" class="h-100 w-100 d-flex flex-column justify-content-center">
         <div v-if="retarded()" class="absolut"><img :style="retardedSize()" src="/assets/pepemeimei.jpg"></div>
-        <div v-if="!waiting" class="d-flex justify-content-center align-items-center h-100">
+        <div v-if="!waiting && !done && !failed && !error" class="d-flex justify-content-center align-items-center h-100">
             <div class="d-flex justify-content-center flex-column w-100 h-100">
                 <div class="d-flex flex-column ">
                     <div class="d-flex justify-content-center align-items-center mb-5">
@@ -24,12 +24,34 @@
                 </div>
             </div>
         </div>
+        <div v-if="rateLimit" class="d-flex flex-column justify-content-center align-items-center h-100">
+                <h3>Rate Limit Exceeded</h3>
+                <p>Sorry, you can only spawn one instance every 5 minutes.</p>
+        </div>
+        <div v-if="failed" class="d-flex flex-column justify-content-center align-items-center h-100">
+            <h3>Deployment failed</h3>
+            <p>There was an error communicating with the deployment server. Try again later</p>
+        </div>
         <div v-if="waiting" class="d-flex flex-column justify-content-center align-items-center h-100">
             <div class="spinner-grow" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
             <div class="mt-2">
                 <p>${waitingText}</p>
+            </div>
+        </div>
+        <div v-if="error" class="d-flex flex-column justify-content-center align-items-center h-100">
+            <h3>Error while deploying</h3>
+            <p>There was an error in the deployment process</p>
+        </div>
+        <div v-if="done" class="d-flex flex-column justify-content-center align-items-center h-100">
+            <div>
+                <h3>Your instance is ready!</h3>
+                <div class="bg-body-secondary rounded-3 shadow p-4">
+                    <p>Username: admin</p>
+                    <p>Password: ${pass}</p>
+                </div>
+                <button class="btn btn-success" @click="goThere()">Go There</button>
             </div>
         </div>
         {{template "footer"}}
@@ -67,6 +89,10 @@
                 waiting: false,
                 failed: false,
                 instanceId: "",
+                done: false,
+                pass: "",
+                error: false,
+                rateLimit: false,
                 waitingText: "Waiting for instance to spawn...",
                 waitingTexts: [
                     "Contemplating the meaning of life while Kubernetes does its thing...",
@@ -98,11 +124,23 @@
                     const data = await response.json();
                     if (response.status === 200) {
                         this.waiting = true;
+                        this.failed = false;
+                        this.rateLimit = false;
+                        this.error = false;
                         this.instanceId = data.uid;
+                        this.pass = data.pass
                         this.waitingFunc()
                         this.checkerTask()
+                    } else if (response.status === 429) {
+                        this.rateLimit = true;
+                        this.waiting = false;
+                        this.failed = false;
+                        this.error = false;
                     } else {
                         this.failed = true;
+                        this.waiting = false;
+                        this.rateLimit = false;
+                        this.error = false;
                     }
                 },
                 retarded() {
@@ -131,16 +169,24 @@
                             }
                         }).catch((err) => {
                             //This is true, because we will get a certificate error if the is up instead of 404
-                            return true;
+                            this.error = true;
+                            return false;
                         }).finally(() => {
                             return false;
                         });
 
                         if (!response)
                             this.checkerTask();
-                        else
-                            window.location = url;
+                        else {
+                            this.done = true;
+                            this.waiting = false;
+                            this.failed = false;
+                            this.error = false;
+                        }
                     }, 2000);
+                },
+                goThere() {
+                    window.location = "https://" + this.instanceId + "." + window.location.hostname;
                 },
                 waitingFunc() {
                     //timeout

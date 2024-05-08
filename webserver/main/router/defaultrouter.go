@@ -35,11 +35,19 @@ func InitRouter(r *gin.Engine) {
 
 		RequestedIps[c.ClientIP()] = time.Now()
 
-		kubernetes.SpawnNewNextcloudDeployment(uid)
+		password, err := kubernetes.SpawnNewNextcloudDeployment(uid)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{
+				"message": "Internal server error - kubernetes error - could not spawn deployment",
+			})
+			return
+		}
 		RequestedIpsInstance[c.ClientIP()] = uid
 		c.JSON(200, gin.H{
 			"message": "Spawned new deployment",
 			"uid":     uid,
+			"pass":    password,
 		})
 	})
 }

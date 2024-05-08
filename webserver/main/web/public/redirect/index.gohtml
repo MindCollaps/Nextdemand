@@ -1,0 +1,21 @@
+{{define "title"}}Next Demand{{end}}
+{{define "metaDescription"}}Next Demand, your demand of your own Cloud can be provided right HERE!{{end}}
+{{define "content"}}
+    {{template "topdoc"}}
+    <div>
+        <div class="h-100 w-100 d-flex flex-column justify-content-center">
+            <div  class="d-flex flex-column justify-content-center align-items-center h-100">
+                <h2>Your instance has been shut down</h2>
+                <button class="btn btn-warning" onclick="go()">Go Back</button>
+            </div>
+        </div>
+
+        <script>
+            function go() {
+                let locations = location.hostname.split('.')
+                location.replace('https://'+locations[1]+'.'+locations[2] + '.' + locations[3] + '/')
+            }
+        </script>
+    </div>
+    {{template "botdoc"}}
+{{end}}

@@ -14,11 +14,32 @@ job:
           app: nextcloud
           instanceId: default
       spec:
+        volumes:
+          - name: nextcloud-config
+            persistentVolumeClaim:
+              claimName: nextcloud-config-pvc
+          - name: nextcloud-data
+            emptyDir: {}
         containers:
           - name: nextcloud
             image: nextcloud
-            # Add other configuration for the Nextcloud container
-        restartPolicy: OnFailure
+            env:
+              - name: NEXTCLOUD_ADMIN_USER
+                value: "admin"
+              - name: NEXTCLOUD_ADMIN_PASSWORD
+                value: "default"
+            volumeMounts:
+              - name: nextcloud-data
+                mountPath: /var/www/html/data/admin/files/Photos
+          - name: config
+            image: busybox
+            command: ["sh", "-c", "sleep 15 && rm -rf /data/* && cp -r /config/* /data"]
+            volumeMounts:
+              - name: nextcloud-config
+                mountPath: /config
+              - name: nextcloud-data
+                mountPath: /data
+        restartPolicy: Never
 
 service:
   apiVersion: v1
@@ -44,6 +65,8 @@ ingress:
   metadata:
     name: nextcloud-ingress
     namespace: nextdemand
+    annotations:
+      traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     labels:
       instanceId: default
       app: nextcloud

@@ -71,15 +71,16 @@
   hosts: all
   become: yes
   tasks:
+    - name: Ensure the directory exists
+      file:
+        path: /var/lib/rancher/k3s/server/manifests
+        state: directory
+
     # https://docs.k3s.io/helm#customizing-packaged-components-with-helmchartconfig
     - name: Copy Traefik values config file to the remote host
       copy:
-        src: kubernetes/traefik-config.yml
+        src: kubernetes/secrets/traefik-config.yml
         dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
-
-    # k8s doesnt know HelmChartConfig, so we need to apply the config manually
-    - name: Apply Traefik values config
-      shell : kubectl apply -f /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
 
     - name: Run k3s installation script
       shell: curl -sfL https://get.k3s.io | sh -
@@ -93,6 +94,10 @@
         - kubernetes
         - openshift
         - PyYAML
+
+    # k8s doesnt know HelmChartConfig, so we need to apply the config manually
+    - name: Apply Traefik values config
+      shell: kubectl apply -f /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
     
     - name: Add Nextcloud Helm repository
       kubernetes.core.helm_repository:
@@ -157,16 +162,9 @@
         apply: yes
         src: /tmp/NextDemand/kubernetes/webserver.yml
 
-    - name: Stop k3s
-      service:
-        name: "{{ item }}"
-        state: stopped
-      loop:
-        - k3s
-
-    - name: Start k3s
-      service:
-        name: "{{ item }}"
-        state: started
-      loop:
-        - k3s
+    - name: Copy Nextcloud default files to mnt
+      copy:
+        src: defaultNextcloudFiles
+        dest: /mnt/data/nextcloud-config
+        mode: 0644
+        owner: "{{ ansible_user }}"
