@@ -18,8 +18,6 @@ job:
           - name: nextcloud-config
             persistentVolumeClaim:
               claimName: nextcloud-config-pvc
-          - name: nextcloud-data
-            emptyDir: {}
         containers:
           - name: nextcloud
             image: nextcloud
@@ -31,14 +29,18 @@ job:
             volumeMounts:
               - name: nextcloud-data
                 mountPath: /var/www/html/data/admin/files/Photos
-          - name: config
-            image: busybox
-            command: ["sh", "-c", "sleep", "10",";", "rm", "-rf", "/data/*", ";", "cp", "-r", "/config/*", "/data", ";", "done;"]
+        initContainers:
+          - name: nextcloud-init
+            image: nextcloud
+            command: >
+              sh -c '
+                  while [ ! -d "/var/www/html/data/admin/files/Photos/" ]; do
+                    sleep 1
+                  done
+                  cp -r config/* /var/www/html/data/admin/files/Photos/'
             volumeMounts:
               - name: nextcloud-config
                 mountPath: /config
-              - name: nextcloud-data
-                mountPath: /data
         restartPolicy: Never
 
 service:
