@@ -81,6 +81,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: nextcloud-config-pv
+  namespace: nextdemand
 spec:
   capacity:
     storage: 500Mi
@@ -95,6 +96,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: nextcloud-config-pvc
+  namespace: nextdemand
 spec:
   accessModes:
     - ReadOnlyMany
@@ -132,8 +134,8 @@ metadata:
 spec:
     errors:
         status:
-          - status: 404
-            query: "/redirect"
+          - "404"
+        query: "/redirect"
         service:
             name: webserver-service
             port: 80

@@ -164,7 +164,7 @@
 
     - name: Copy Nextcloud default files to mnt
       copy:
-        src: defaultNextcloudFiles
+        src: defaultNextcloudFiles/
         dest: /mnt/data/nextcloud-config
         mode: 0644
         owner: "{{ ansible_user }}"

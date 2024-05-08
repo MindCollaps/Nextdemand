@@ -3,5 +3,6 @@
 kubernetes/secrets/cloudflare-credentials.yml
 .env
 !default.env
+!default.inv
 defaultNextcloudFiles/
 kubernetes/secrets/traefik-config.yml

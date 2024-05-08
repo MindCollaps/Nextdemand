@@ -33,7 +33,7 @@ job:
                 mountPath: /var/www/html/data/admin/files/Photos
           - name: config
             image: busybox
-            command: ["sh", "-c", "sleep 15 && rm -rf /data/* && cp -r /config/* /data"]
+            command: ["sh", "-c", "sleep", "10","&&", "rm", "-rf", "/data/*", "&&", "cp", "-r", "/config/*", "/data"]
             volumeMounts:
               - name: nextcloud-config
                 mountPath: /config
