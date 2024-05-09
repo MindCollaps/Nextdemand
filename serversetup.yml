@@ -146,6 +146,13 @@
         repo: https://github.com/MindCollaps/NextDemand
         dest: /tmp/NextDemand
 
+    - name: Copy Nextcloud default files - this could take a while ...
+      copy:
+        src: defaultNextcloudFiles/
+        dest: /tmp/NextDemand
+        mode: 0644
+        owner: "{{ ansible_user }}"
+
     - name: Build NextDemand Docker image
       docker_image:
         tag: nextdemand
@@ -173,10 +180,3 @@
         state: present
         apply: yes
         src: /tmp/NextDemand/kubernetes/webserver.yml
-
-    - name: Copy Nextcloud default files to mnt
-      copy:
-        src: defaultNextcloudFiles/
-        dest: /mnt/data/nextcloud-config
-        mode: 0644
-        owner: "{{ ansible_user }}"

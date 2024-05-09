@@ -4,7 +4,7 @@
     {{template "topdoc"}}
     <div id="app" class="h-100 w-100 d-flex flex-column justify-content-center">
         <div v-if="retarded()" class="absolut"><img :style="retardedSize()" src="/assets/pepemeimei.jpg"></div>
-        <div v-if="!waiting && !done && !failed && !error" class="d-flex justify-content-center align-items-center h-100">
+        <div v-if="!waiting && !done && !failed && !error && !rateLimit" class="d-flex justify-content-center align-items-center h-100">
             <div class="d-flex justify-content-center flex-column w-100 h-100">
                 <div class="d-flex flex-column ">
                     <div class="d-flex justify-content-center align-items-center mb-5">
@@ -119,14 +119,17 @@
                         },
                     }).then((res) => {
                         return res;
-                    });
+                    }).catch((err) => {
+                        return errx;
+                    })
 
-                    const data = await response.json();
                     if (response.status === 200) {
                         this.waiting = true;
                         this.failed = false;
                         this.rateLimit = false;
                         this.error = false;
+                        this.done = false;
+                        var data = await response.json();
                         this.instanceId = data.uid;
                         this.pass = data.pass
                         this.waitingFunc()
@@ -136,11 +139,13 @@
                         this.waiting = false;
                         this.failed = false;
                         this.error = false;
+                        this.done = false;
                     } else {
                         this.failed = true;
                         this.waiting = false;
                         this.rateLimit = false;
                         this.error = false;
+                        this.done = false;
                     }
                 },
                 retarded() {
@@ -169,7 +174,11 @@
                             }
                         }).catch((err) => {
                             //This is true, because we will get a certificate error if the is up instead of 404
+                            this.failed = false;
+                            this.waiting = false;
+                            this.rateLimit = false;
                             this.error = true;
+                            this.done = false;
                             return false;
                         }).finally(() => {
                             return false;
@@ -182,6 +191,7 @@
                             this.waiting = false;
                             this.failed = false;
                             this.error = false;
+                            this.rateLimit = false;
                         }
                     }, 2000);
                 },

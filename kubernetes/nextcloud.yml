@@ -1,13 +1,18 @@
-job:
-  apiVersion: batch/v1
-  kind: Job
+dep:
+  apiVersion: apps/v1
+  kind: Deployment
   metadata:
     name: nextcloud
     namespace: nextdemand
     labels:
-      instanceId: default
       app: nextcloud
+      instanceId: default
   spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: nextcloud
+        instanceId: default
     template:
       metadata:
         labels:
@@ -18,6 +23,8 @@ job:
           - name: nextcloud-config
             persistentVolumeClaim:
               claimName: nextcloud-config-pvc
+          - name: nextcloud-data
+            emptyDir: {}
         containers:
           - name: nextcloud
             image: nextcloud
@@ -26,19 +33,22 @@ job:
                 value: "admin"
               - name: NEXTCLOUD_ADMIN_PASSWORD
                 value: "default"
-        initContainers:
-          - name: nextcloud-init
-            image: nextcloud
-            command: >
-              sh -c '
-                  while [ ! -d "/var/www/html/data/admin/files/Photos/" ]; do
-                    sleep 1
-                  done
-                  cp -r config/* /var/www/html/data/admin/files/Photos/'
+              - name: NEXTCLOUD_TRUSTED_DOMAINS
+                value: "default.nextdemand.neoin.space"
             volumeMounts:
               - name: nextcloud-config
-                mountPath: /config
-        restartPolicy: Never
+                mountPath: /default
+            readinessProbe:
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    cp -r /default/* /var/www/html/core/skeleton &&
+                    chown -R www-data:www-data /var/www/html/core/skeleton &&
+                    su www-data -s /bin/bash -c 'php occ maintenance:install --admin-user $NEXTCLOUD_ADMIN_USER --admin-pass $NEXTCLOUD_ADMIN_PASSWORD &&  php occ config:system:set trusted_domains 2 --value $NEXTCLOUD_TRUSTED_DOMAINS'
 
 service:
   apiVersion: v1

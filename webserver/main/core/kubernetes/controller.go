@@ -83,15 +83,15 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	}
 
 	//Job deployment
-	//Change job name to include instanceId
-	deployment.Object["job"].(map[string]interface{})["metadata"].(map[string]interface{})["name"] = "nextcloud-job-" + instanceId
+	//Change dep name to include instanceId
+	deployment.Object["dep"].(map[string]interface{})["metadata"].(map[string]interface{})["name"] = "nextcloud-dep-" + instanceId
 	//Change metadata label instanceId
-	deployment.Object["job"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+	deployment.Object["dep"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 	//Change metadata label instanceId in spec
-	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 	//Change default password
-	password := generateRandomPassword(8)
-	deployment.Object["job"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["env"].([]interface{})[1].(map[string]interface{})["value"] = password
+	password := generateRandomPassword(10)
+	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["env"].([]interface{})[1].(map[string]interface{})["value"] = password
 
 	//Service deployment
 	//Change service name to include instanceId
@@ -111,11 +111,11 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	//Change spec service name to include instanceId
 	deployment.Object["ingress"].(map[string]interface{})["spec"].(map[string]interface{})["rules"].([]interface{})[0].(map[string]interface{})["http"].(map[string]interface{})["paths"].([]interface{})[0].(map[string]interface{})["backend"].(map[string]interface{})["service"].(map[string]interface{})["name"] = "nextcloud-service-" + instanceId
 
-	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
-	job := unstructured.Unstructured{Object: deployment.Object["job"].(map[string]interface{})}
+	depRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	dep := unstructured.Unstructured{Object: deployment.Object["dep"].(map[string]interface{})}
 
-	//Output job as json formatted string
-	json, _ := job.MarshalJSON()
+	//Output dep as json formatted string
+	json, _ := dep.MarshalJSON()
 	fmt.Println(string(json))
 
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
@@ -130,16 +130,18 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	json, _ = ingress.MarshalJSON()
 	fmt.Println(string(json))
 
-	_, err = ClientSet.Resource(jobRes).Namespace(env.NameSpace).Create(context.TODO(), &job, metav1.CreateOptions{})
+	_, err = ClientSet.Resource(depRes).Namespace(env.NameSpace).Create(context.TODO(), &dep, metav1.CreateOptions{})
 	if err != nil {
-		fmt.Println("Error creating job:", err)
+		fmt.Println("Error creating dep:", err)
+		return "", err
 	}
 
-	fmt.Println("Created job")
+	fmt.Println("Created dep")
 
 	_, err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Create(context.TODO(), &service, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating service:", err)
+		return "", err
 	}
 
 	fmt.Println("Created service")
@@ -147,6 +149,7 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	_, err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Create(context.TODO(), &ingress, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Error creating ingress:", err)
+		return "", err
 	}
 
 	fmt.Println("Created ingress")
@@ -155,12 +158,12 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 }
 
 func DeleteAllRunning() {
-	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	depRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "deployments"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
 	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 
-	err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
+	err := ClientSet.Resource(depRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
 		LabelSelector: "app=nextcloud",
 	})
 	if err != nil {
@@ -191,12 +194,12 @@ func DeleteAllRunning() {
 }
 
 func DeleteInstance(instanceId string) {
-	jobRes := schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	depRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "deployments"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
 	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 
-	err := ClientSet.Resource(jobRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-job-"+instanceId, metav1.DeleteOptions{})
+	err := ClientSet.Resource(depRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-job-"+instanceId, metav1.DeleteOptions{})
 	if err != nil {
 		fmt.Println("Error deleting job:", err)
 	}

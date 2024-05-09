@@ -83,10 +83,11 @@ metadata:
   name: nextcloud-config-pv
   namespace: nextdemand
 spec:
+  storageClassName: ""
   capacity:
     storage: 500Mi
   accessModes:
-    - ReadOnlyMany
+    - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /mnt/data/nextcloud-config
@@ -98,11 +99,13 @@ metadata:
   name: nextcloud-config-pvc
   namespace: nextdemand
 spec:
+  storageClassName: ""
   accessModes:
-    - ReadOnlyMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 500Mi
+  volumeName: nextcloud-config-pv
 
 ---
 apiVersion: networking.k8s.io/v1
