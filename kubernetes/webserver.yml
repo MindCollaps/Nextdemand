@@ -90,7 +90,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /mnt/data/nextcloud-config
+    path: /mnt/data/nextcloud-config # todo: make sure this path exists
 
 ---
 apiVersion: v1
