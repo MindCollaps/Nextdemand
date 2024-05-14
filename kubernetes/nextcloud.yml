@@ -44,7 +44,7 @@ dep:
                   command: [
                     "/bin/sh",
                     "-c", "sleep 10 && cp -r /default/* /var/www/html/core/skeleton && cp -r /default/* /var/www/html/core/skeleton/Photos && chown -R www-data:www-data /var/www/html/core/skeleton && su www-data -s /bin/bash -c 'php occ maintenance:install --admin-user $NEXTCLOUD_ADMIN_USER --admin-pass $NEXTCLOUD_ADMIN_PASSWORD &&  php occ config:system:set trusted_domains 2 --value $NEXTCLOUD_TRUSTED_DOMAINS'" ]
----
+
 service:
   apiVersion: v1
   kind: Service
@@ -63,7 +63,7 @@ service:
         port: 80
         targetPort: 80
 
----
+
 ingress:
   apiVersion: networking.k8s.io/v1
   kind: Ingress
