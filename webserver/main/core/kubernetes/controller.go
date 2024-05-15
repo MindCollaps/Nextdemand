@@ -85,13 +85,22 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	//Job deployment
 	//Change dep name to include instanceId
 	deployment.Object["dep"].(map[string]interface{})["metadata"].(map[string]interface{})["name"] = "nextcloud-dep-" + instanceId
+
 	//Change metadata label instanceId
 	deployment.Object["dep"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+
 	//Change metadata label instanceId in spec
 	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+
+	//Change spec selector instanceId
+	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["selector"].(map[string]interface{})["matchLabels"].(map[string]interface{})["instanceId"] = instanceId
+
 	//Change default password
 	password := generateRandomPassword(10)
 	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["env"].([]interface{})[1].(map[string]interface{})["value"] = password
+
+	//Change the domain
+	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["env"].([]interface{})[2].(map[string]interface{})["value"] = instanceId + "." + env.Host
 
 	//Service deployment
 	//Change service name to include instanceId
