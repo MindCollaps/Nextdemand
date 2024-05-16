@@ -171,22 +171,27 @@
                         }).then((res) => {
                             if (res.status === 200) {
                                 return true;
+                            } else if (res.status === 0) {
+                                this.done = true;
+                                this.waiting = false;
+                                this.failed = false;
+                                this.error = false;
+                                this.rateLimit = false;
+                                return true;
                             }
                         }).catch((err) => {
                             //This is true, because we will get a certificate error if the is up instead of 404
                             this.failed = false;
-                            this.waiting = false;
+                            this.waiting = true;
                             this.rateLimit = false;
-                            this.error = true;
+                            this.error = false;
                             this.done = false;
-                            return false;
-                        }).finally(() => {
                             return false;
                         });
 
-                        if (!response)
+                        if (!response) {
                             this.checkerTask();
-                        else {
+                        } else {
                             this.done = true;
                             this.waiting = false;
                             this.failed = false;

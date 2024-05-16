@@ -85,13 +85,22 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	//Job deployment
 	//Change dep name to include instanceId
 	deployment.Object["dep"].(map[string]interface{})["metadata"].(map[string]interface{})["name"] = "nextcloud-dep-" + instanceId
+
 	//Change metadata label instanceId
 	deployment.Object["dep"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+
 	//Change metadata label instanceId in spec
 	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
+
+	//Change spec selector instanceId
+	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["selector"].(map[string]interface{})["matchLabels"].(map[string]interface{})["instanceId"] = instanceId
+
 	//Change default password
 	password := generateRandomPassword(10)
 	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["env"].([]interface{})[1].(map[string]interface{})["value"] = password
+
+	//Change the domain
+	deployment.Object["dep"].(map[string]interface{})["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["env"].([]interface{})[2].(map[string]interface{})["value"] = instanceId + "." + env.Host
 
 	//Service deployment
 	//Change service name to include instanceId
@@ -187,41 +196,36 @@ func DeleteAllRunning() {
 	err = ClientSet.Resource(pod).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
 		LabelSelector: "app=nextcloud",
 	})
-
 	if err != nil {
 		fmt.Println("Error deleting pods:", err)
 	}
 }
 
 func DeleteInstance(instanceId string) {
-	depRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "deployments"}
+	depRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
-	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 
-	err := ClientSet.Resource(depRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-job-"+instanceId, metav1.DeleteOptions{})
+	err := ClientSet.Resource(depRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-dep-"+instanceId, metav1.DeleteOptions{})
 	if err != nil {
-		fmt.Println("Error deleting job:", err)
+		fmt.Println("Error deleting deployment nextcloud-dep-"+instanceId+": ", err)
+	} else {
+		fmt.Println("Deleted deployment nextcloud-dep-" + instanceId)
+
 	}
 
 	err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-service-"+instanceId, metav1.DeleteOptions{})
 	if err != nil {
-		fmt.Println("Error deleting service:", err)
+		fmt.Println("Error deleting service nextcloud-service-"+instanceId+": ", err)
+	} else {
+		fmt.Println("Deleted service nextcloud-service-" + instanceId)
 	}
 
 	err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-ingress-"+instanceId, metav1.DeleteOptions{})
 	if err != nil {
-		fmt.Println("Error deleting ingress:", err)
-	}
-
-	err = ClientSet.Resource(pod).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
-		LabelSelector: "instanceId=" + instanceId,
-	})
-
-	err = ClientSet.Resource(pod).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-job-"+instanceId, metav1.DeleteOptions{})
-
-	if err != nil {
-		fmt.Println("Error deleting pods:", err)
+		fmt.Println("Error deleting nextcloud-ingress-"+instanceId+": ", err)
+	} else {
+		fmt.Println("Deleted ingress nextcloud-ingress-" + instanceId)
 	}
 }
 
