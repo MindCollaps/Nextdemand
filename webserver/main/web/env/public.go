@@ -8,6 +8,7 @@ const VERSION = "v0.0.1"
 const BANNER = ""
 
 var UNIX = false
+var UseEnvFile = false
 var Host string
 var NameSpace string
 var Testing = false

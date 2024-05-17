@@ -68,14 +68,16 @@ func flags() {
 }
 
 func environmentSetup() {
-	envLocation := ".env"
-	if env.UNIX {
-		envLocation = "/etc/nxdemand/.env"
-	}
+	if env.UseEnvFile {
+		envLocation := ".env"
+		if env.UNIX {
+			envLocation = "/etc/nxdemand/.env"
+		}
 
-	if err := godotenv.Load(envLocation); err != nil {
-		log.Println("No .env file found")
-		return
+		if err := godotenv.Load(envLocation); err != nil {
+			log.Println("No .env file found")
+			return
+		}
 	}
 
 	if !isFlagPassed("namespace") && os.Getenv("NXDEMAND_NAMESPACE") != "" {
