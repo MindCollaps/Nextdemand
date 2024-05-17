@@ -108,25 +108,22 @@ spec:
   volumeName: nextcloud-config-pv
 
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
 metadata:
-  name: webserver-ingress
+  name: webserver-ingressroute
   namespace: nextdemand
   labels:
     app: nextdemand
 spec:
-  rules:
-    - host: "nextdemand.neoin.space"
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: webserver-service
-                port:
-                  number: 80
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`nextdemand.neoin.space`)
+      kind: Rule
+      services:
+        - name: webserver-service
+          port: 80
 
 ---
 apiVersion: traefik.io/v1alpha1
@@ -138,7 +135,7 @@ spec:
     errors:
         status:
           - "404"
-        query: "/redirect"
+        query: /redirect
         service:
             name: webserver-service
             port: 80

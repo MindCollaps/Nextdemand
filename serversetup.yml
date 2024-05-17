@@ -146,10 +146,15 @@
         repo: https://github.com/MindCollaps/NextDemand
         dest: /tmp/NextDemand
 
+    - name: Ensure the directory exists
+      file:
+        path: /mnt/data/nextcloud-config
+        state: directory
+
     - name: Copy Nextcloud default files - this could take a while ...
       copy:
         src: defaultNextcloudFiles/
-        dest: /tmp/NextDemand
+        dest: /mnt/data/nextcloud-config
         mode: 0644
         owner: "{{ ansible_user }}"
 

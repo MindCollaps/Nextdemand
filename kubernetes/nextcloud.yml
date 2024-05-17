@@ -65,25 +65,22 @@ service:
 
 
 ingress:
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
+  apiVersion: traefik.containo.us/v1alpha1
+  kind: IngressRoute
   metadata:
     name: nextcloud-ingress
     namespace: nextdemand
     annotations:
       traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     labels:
-      instanceId: default
       app: nextcloud
+      instanceId: default
   spec:
-    rules:
-      - host: "default.nextdemand.neoin.space"
-        http:
-          paths:
-            - path: /
-              pathType: Prefix
-              backend:
-                service:
-                  name: nextcloud-service
-                  port:
-                    number: 80
+    entryPoints:
+      - websecure
+    routes:
+      - match: Host(`default.nextdemand.neoin.space`)
+        kind: Rule
+        services:
+          - name: nextcloud-service
+            port: 80

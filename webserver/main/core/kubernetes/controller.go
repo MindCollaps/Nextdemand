@@ -116,9 +116,9 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	//Change metadata label instanceId
 	deployment.Object["ingress"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["instanceId"] = instanceId
 	//Change spec rules host to include instanceId
-	deployment.Object["ingress"].(map[string]interface{})["spec"].(map[string]interface{})["rules"].([]interface{})[0].(map[string]interface{})["host"] = instanceId + "." + env.Host
+	deployment.Object["ingress"].(map[string]interface{})["spec"].(map[string]interface{})["routes"].([]interface{})[0].(map[string]interface{})["match"] = "Host(`" + instanceId + "." + env.Host + "`)"
 	//Change spec service name to include instanceId
-	deployment.Object["ingress"].(map[string]interface{})["spec"].(map[string]interface{})["rules"].([]interface{})[0].(map[string]interface{})["http"].(map[string]interface{})["paths"].([]interface{})[0].(map[string]interface{})["backend"].(map[string]interface{})["service"].(map[string]interface{})["name"] = "nextcloud-service-" + instanceId
+	deployment.Object["ingress"].(map[string]interface{})["spec"].(map[string]interface{})["routes"].([]interface{})[0].(map[string]interface{})["services"].([]interface{})[0].(map[string]interface{})["name"] = "nextcloud-service-" + instanceId
 
 	depRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	dep := unstructured.Unstructured{Object: deployment.Object["dep"].(map[string]interface{})}
@@ -169,7 +169,7 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 func DeleteAllRunning() {
 	depRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "deployments"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
-	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+	ingressRes := schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "IngressRoute"}
 	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 
 	err := ClientSet.Resource(depRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
@@ -204,7 +204,7 @@ func DeleteAllRunning() {
 func DeleteInstance(instanceId string) {
 	depRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
-	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+	ingressRes := schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "IngressRoute"}
 
 	err := ClientSet.Resource(depRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-dep-"+instanceId, metav1.DeleteOptions{})
 	if err != nil {
