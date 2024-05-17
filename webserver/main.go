@@ -33,6 +33,7 @@ func main() {
 
 	//Environment setup
 	environmentSetup()
+	printEnv()
 
 	//Kubernetes setup
 	if env.Testing {
@@ -68,6 +69,11 @@ func environmentSetup() {
 	envLocation := ".env"
 	if env.UNIX {
 		envLocation = "/etc/nxdemand/.env"
+	}
+
+	if err := godotenv.Load(envLocation); err != nil {
+		log.Println("No .env file found")
+		return
 	}
 
 	if !isFlagPassed("namespace") && os.Getenv("NXDEMAND_NAMESPACE") != "" {
@@ -116,11 +122,17 @@ func environmentSetup() {
 			env.Port = port
 		}
 	}
+}
 
-	if err := godotenv.Load(envLocation); err != nil {
-		log.Println("No .env file found")
-		return
-	}
+func printEnv() {
+	fmt.Println("Namespace:", env.NameSpace)
+	fmt.Println("Host:", env.Host)
+	fmt.Println("Testing:", env.Testing)
+	fmt.Println("CheckTime:", env.CheckTime)
+	fmt.Println("CheckSimultaneous:", env.CheckSimultaneous)
+	fmt.Println("TimeAlive:", env.TimeAlive)
+	fmt.Println("SimultaneousInstances:", env.SimultaneousInstances)
+	fmt.Println("Port:", env.Port)
 }
 
 func isFlagPassed(name string) bool {
