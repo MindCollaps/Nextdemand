@@ -13,3 +13,7 @@ var NameSpace string
 var Testing = false
 var Port = 80
 var TimeAlive = 5
+var SimultaneousInstances = 10
+
+var CheckTime = false
+var CheckSimultaneous = false

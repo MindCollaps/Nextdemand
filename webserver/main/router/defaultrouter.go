@@ -2,6 +2,7 @@ package router
 
 import (
 	"NextDemand/main/core/kubernetes"
+	"NextDemand/main/web/env"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
@@ -13,10 +14,21 @@ var RequestedIpsInstance = make(map[string]string)
 func InitRouter(r *gin.Engine) {
 	r.GET("/spawn", func(c *gin.Context) {
 		// Check if the IP has requested a deployment in the last 5 minutes
-		if RequestedIps[c.ClientIP()] != (time.Time{}) {
-			t := RequestedIps[c.ClientIP()]
+		if env.CheckTime {
+			if RequestedIps[c.ClientIP()] != (time.Time{}) {
+				t := RequestedIps[c.ClientIP()]
 
-			if time.Since(t) < 10*time.Minute {
+				if time.Since(t) < 10*time.Minute {
+					c.JSON(429, gin.H{
+						"message": "Rate limit exceeded",
+					})
+					return
+				}
+			}
+		}
+
+		if env.CheckSimultaneous {
+			if len(RequestedIps) >= env.SimultaneousInstances {
 				c.JSON(429, gin.H{
 					"message": "Rate limit exceeded",
 				})

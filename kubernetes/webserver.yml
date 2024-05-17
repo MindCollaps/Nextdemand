@@ -58,6 +58,14 @@ spec:
               value: "nextdemand.neoin.space"
             - name: NXDEMAND_PORT
               value: "80"
+            - name: SIMULANEOUS_INSTANCES
+              value: "10"
+            - name: TIME_ALIVE
+              value: "10"
+            - name: CHECK_SIMULANEOUS
+              value: "true"
+            - name: CHECK_TIME
+              value: "false"
           image: nextdemand:nextdemand
 
 ---

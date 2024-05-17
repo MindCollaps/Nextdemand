@@ -82,6 +82,32 @@ func environmentSetup() {
 		env.Testing = true
 	}
 
+	if os.Getenv("CHECK_TIME") == "true" {
+		env.CheckTime = true
+	}
+
+	if os.Getenv("CHECK_SIMULTANEOUS") == "true" {
+		env.CheckSimultaneous = true
+	}
+
+	if os.Getenv("TIME_ALIVE") != "" {
+		timeAlive, err := strconv.Atoi(os.Getenv("TIME_ALIVE"))
+		if err != nil {
+			log.Println("Invalid time alive specified in .env file")
+		} else {
+			env.TimeAlive = timeAlive
+		}
+	}
+
+	if os.Getenv("SIMULTANEOUS_INSTANCES") != "" {
+		simultaneousInstances, err := strconv.Atoi(os.Getenv("SIMULTANEOUS_INSTANCES"))
+		if err != nil {
+			log.Println("Invalid simultaneous instances specified in .env file")
+		} else {
+			env.SimultaneousInstances = simultaneousInstances
+		}
+	}
+
 	if !isFlagPassed("port") && os.Getenv("NXDEMAND_PORT") != "" {
 		port, err := strconv.Atoi(os.Getenv("NXDEMAND_PORT"))
 		if err != nil {

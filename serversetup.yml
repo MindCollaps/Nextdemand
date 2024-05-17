@@ -43,6 +43,7 @@
         - python3-pip
         - git
         - docker.io
+        - htop
 
     - name: Install helm if not exists
       unarchive:
