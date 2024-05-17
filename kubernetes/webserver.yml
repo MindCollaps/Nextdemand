@@ -62,7 +62,7 @@ spec:
               value: "10"
             - name: TIME_ALIVE
               value: "10"
-            - name: CHECK_SIMULANEOUS
+            - name: CHECK_SIMULTANEOUS
               value: "true"
             - name: CHECK_TIME
               value: "false"
