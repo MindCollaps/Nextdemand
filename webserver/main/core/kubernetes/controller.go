@@ -167,7 +167,7 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 }
 
 func DeleteAllRunning() {
-	depRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "deployments"}
+	depRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	//ingressRes := schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "IngressRoute"}
 	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
@@ -176,7 +176,7 @@ func DeleteAllRunning() {
 		LabelSelector: "app=nextcloud",
 	})
 	if err != nil {
-		fmt.Println("Error deleting jobs:", err)
+		fmt.Println("Error deleting deployments:", err)
 	}
 
 	err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
