@@ -1,0 +1,32 @@
+{{define "title"}}There is no help{{end}}
+{{define "metaDescription"}}No help here!{{end}}
+{{define "content"}}
+    {{template "topdoc"}}
+    <div id="app">
+        <div :style="style()" style="position: absolute; width: 100vw; bottom: 0; background-color: blue; z-index: -1000">
+        </div>
+        <div class="h-100 w-100 d-flex flex-column justify-content-center">
+            <div  class="d-flex flex-column justify-content-center align-items-center h-100">
+                <h1>There is no help</h1>
+                <img src="/assets/cry.png" style="width: 200px; height: 200px;">
+                <button class="btn btn-danger mt-3" @click="cry += cry * 0.025 + 0.01">Cry</button>
+            </div>
+        </div>
+    </div>
+
+        <script>
+            var app = Vue.createApp({
+                data: () => ({
+                    cry: 0
+                }),
+                methods: {
+                    style() {
+                        let height = this.cry * 10;
+
+                        return "height: " + height + "vh";
+                    }
+                }
+            }).mount("#app")
+        </script>
+    {{template "botdoc"}}
+{{end}}
