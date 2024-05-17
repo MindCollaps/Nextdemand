@@ -133,7 +133,7 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 	json, _ = service.MarshalJSON()
 	fmt.Println(string(json))
 
-	ingressRes := schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
+	ingressRes := schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "ingressroutes"}
 	ingress := unstructured.Unstructured{Object: deployment.Object["ingress"].(map[string]interface{})}
 
 	json, _ = ingress.MarshalJSON()

@@ -159,7 +159,7 @@
                 },
                 checkerTask() {
                     setTimeout(async () => {
-                        let url = "https://" + this.instanceId + "." + window.location.hostname;
+                        let url = "https://" + this.instanceId + "." + window.location.hostname + "/login";
                         console.log("Checking: " + url)
 
                         let response = await fetch(url, {

@@ -70,8 +70,6 @@ ingress:
   metadata:
     name: nextcloud-ingress
     namespace: nextdemand
-    annotations:
-      traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     labels:
       app: nextcloud
       instanceId: default
@@ -81,6 +79,10 @@ ingress:
     routes:
       - match: Host(`default.nextdemand.neoin.space`)
         kind: Rule
+        middlewares:
+          - name: error-handler-middleware
         services:
           - name: nextcloud-service
             port: 80
+    tls:
+      certResolver: letsencrypt

@@ -11,8 +11,8 @@ metadata:
   name: webserver-k8s-access
   namespace: nextdemand
 rules:
-  - apiGroups: ["batch", "extensions", "apps", "networking.k8s.io", ""]
-    resources: ["pods", "services", "deployments", "ingresses", "jobs"]
+  - apiGroups: ["batch", "extensions", "apps", "networking.k8s.io", "traefik.containo.us", ""]
+    resources: ["pods", "services", "deployments", "ingresses", "ingressroutes", "jobs"]
     verbs: ["get", "list", "watch", "create", "update", "delete"]
 
 ---
