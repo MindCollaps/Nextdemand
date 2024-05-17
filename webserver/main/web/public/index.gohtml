@@ -46,7 +46,8 @@
         </div>
         <div v-if="done" class="d-flex flex-column justify-content-center align-items-center h-100">
             <div>
-                <h3>Your instance is ready!</h3>
+                <h3 v-if="!timoutShow">Your instance is ready!</h3>
+                <h3 v-if="timoutShow">Your instance might be ready, check it out</h3>
                 <div class="bg-body-secondary rounded-3 shadow p-4">
                     <p>Username: admin</p>
                     <p>Password: ${pass}</p>
@@ -93,6 +94,8 @@
                 pass: "",
                 error: false,
                 rateLimit: false,
+                timoutShow: false,
+                tried: 0,
                 waitingText: "Waiting for instance to spawn...",
                 waitingTexts: [
                     "Contemplating the meaning of life while Kubernetes does its thing...",
@@ -159,6 +162,17 @@
                 },
                 checkerTask() {
                     setTimeout(async () => {
+                        if (this.done === true) return;
+                        if (this.tried > 8) {
+                            this.timoutShow = true;
+                            this.done = true;
+                            this.waiting = false;
+                            this.failed = false;
+                            this.error = false;
+                            this.rateLimit = false;
+                            return;
+                        }
+                        this.tried++;
                         let url = "https://" + this.instanceId + "." + window.location.hostname + "/login";
                         console.log("Checking: " + url)
 
@@ -206,7 +220,7 @@
                 waitingFunc() {
                     //timeout
                     setTimeout(() => {
-                        this.waitingText = this.waitingTexts[Math.floor(Math.random() * this.waitingTexts.length - 1)];
+                        this.waitingText = this.waitingTexts[Math.floor(Math.random() * this.waitingTexts.length - 2)];
                         this.waitingFunc();
                     }, 8000);
                 }
