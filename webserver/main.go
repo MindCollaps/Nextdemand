@@ -20,6 +20,8 @@ import (
 var Files embed.FS
 
 func main() {
+	log.Println("--------------------------------")
+	log.Println("Starting NextDemand")
 	_, err := Files.ReadDir("main/web")
 	if err != nil {
 		log.Println("Failed to read public files - this is likely a problem during compilation. Exiting...")
