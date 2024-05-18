@@ -142,7 +142,7 @@ metadata:
 spec:
     errors:
         status:
-          - "404"
+          - "502"
         query: /redirect
         service:
             name: webserver-service

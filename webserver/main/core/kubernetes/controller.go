@@ -168,7 +168,7 @@ func SpawnNewNextcloudDeployment(instanceId string) (string, error) {
 
 func DeleteAllRunning() {
 	depRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
-	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	//serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	//ingressRes := schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "IngressRoute"}
 	pod := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 
@@ -179,12 +179,13 @@ func DeleteAllRunning() {
 		fmt.Println("Error deleting deployments:", err)
 	}
 
-	err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
+	/*err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
 		LabelSelector: "app=nextcloud",
 	})
 	if err != nil {
 		fmt.Println("Error deleting services:", err)
 	}
+	*/
 
 	/*
 		err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{
@@ -205,7 +206,7 @@ func DeleteAllRunning() {
 
 func DeleteInstance(instanceId string) {
 	depRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
-	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	//serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	//ingressRes := schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "IngressRoute"}
 
 	err := ClientSet.Resource(depRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-dep-"+instanceId, metav1.DeleteOptions{})
@@ -216,12 +217,14 @@ func DeleteInstance(instanceId string) {
 
 	}
 
-	err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-service-"+instanceId, metav1.DeleteOptions{})
-	if err != nil {
-		fmt.Println("Error deleting service nextcloud-service-"+instanceId+": ", err)
-	} else {
-		fmt.Println("Deleted service nextcloud-service-" + instanceId)
-	}
+	/*
+		err = ClientSet.Resource(serviceRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-service-"+instanceId, metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Println("Error deleting service nextcloud-service-"+instanceId+": ", err)
+		} else {
+			fmt.Println("Deleted service nextcloud-service-" + instanceId)
+		}
+	*/
 
 	/*err = ClientSet.Resource(ingressRes).Namespace(env.NameSpace).Delete(context.TODO(), "nextcloud-ingress-"+instanceId, metav1.DeleteOptions{})
 	if err != nil {
